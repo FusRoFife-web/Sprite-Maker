@@ -27,7 +27,6 @@
     const palette = document.getElementById('palette');
     const cells = [];
 
-    // 1. Build the 16x16 grid
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -52,22 +51,10 @@
       cells.push(cell);
     }
 
-    // 2. Build the Expanded Color Palette
     const paletteColors = [
-      '#000000', // Black
-      '#FFFFFF', // White
-      '#808080', // Grey
-      '#8B4513', // Capybara Brown
-      '#D2B48C', // Tan / Sand
-      '#FF0000', // Red
-      '#FFA500', // Orange
-      '#FFD700', // Yellow
-      '#32CD32', // Lime Green
-      '#00FFFF', // Cyan
-      '#1E90FF', // Blue
-      '#9370DB', // Purple
-      '#FF69B4', // Hot Pink
-      '#FFB6C1'  // Light Pink
+      '#000000', '#FFFFFF', '#808080', '#8B4513', '#D2B48C', '#FF0000', 
+      '#FFA500', '#FFD700', '#32CD32', '#00FFFF', '#1E90FF', '#9370DB', 
+      '#FF69B4', '#FFB6C1'
     ];
 
     paletteColors.forEach(color => {
@@ -84,7 +71,6 @@
       palette.appendChild(btn);
     });
 
-    // 3. Render grid and send to Google Drive
     async function saveToCloud() {
       const btn = document.querySelector('button');
       btn.innerText = "Sending...";
@@ -105,20 +91,20 @@
       const base64Data = dataUrl.split(',')[1];
       const filename = `sprite_${Math.floor(Math.random()*10000)}.png`;
 
-      // Your exact Google Apps Script URL
       const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYl-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
 
       try {
-        if (scriptUrl === 'YOUR_GOOGLE_SCRIPT_URL_HERE') {
-          alert('Paste your Google Script URL into the code first!');
-        } else {
-          await fetch(scriptUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ image: base64Data, filename: filename })
-          });
-          alert("Sent to Uncle Dean's Drive!");
-        }
+        await fetch(scriptUrl, {
+          method: 'POST',
+          mode: 'no-cors', // This is the crucial fix for mobile browsers
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ image: base64Data, filename: filename })
+        });
+        
+        // Because of no-cors, the browser won't let us see the exact success response, 
+        // so we assume success if it didn't crash.
+        alert("Sent to Uncle Dean's Drive!");
+        
       } catch (err) {
         alert('Error sending sprite. Check your internet connection.');
       } finally {
