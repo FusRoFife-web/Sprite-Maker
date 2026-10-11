@@ -6,44 +6,107 @@
   <style>
     body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #222; color: white; margin: 0; padding: 20px; touch-action: pan-y; }
     h2 { margin-bottom: 10px; }
+    
     #grid { display: grid; grid-template-columns: repeat(16, 1fr); width: 90vw; max-width: 350px; aspect-ratio: 1; border: 2px solid #555; background: white; touch-action: none; }
     .cell { border: 1px solid #f0f0f0; }
-    #palette { display: flex; gap: 8px; margin: 20px 0; flex-wrap: wrap; justify-content: center; max-width: 350px; }
+    
+    /* Toolbar Styles */
+    #tools { display: flex; gap: 15px; margin-top: 15px; }
+    .tool-btn { padding: 10px 20px; font-size: 16px; font-weight: bold; background: #444; color: white; border: 2px solid #222; border-radius: 8px; cursor: pointer; }
+    .tool-btn.active { background: #4CAF50; border-color: white; }
+    
+    #palette { display: flex; gap: 8px; margin: 15px 0 25px 0; flex-wrap: wrap; justify-content: center; max-width: 350px; }
     .color { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #222; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     .selected { border-color: white; transform: scale(1.15); }
-    button { padding: 15px 30px; font-size: 18px; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-    button:active { transform: translateY(2px); }
+    
+    #save-btn { padding: 15px 30px; font-size: 18px; font-weight: bold; background: #1E90FF; color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    #save-btn:active { transform: translateY(2px); }
   </style>
 </head>
 <body>
   <h2>Sprite Maker</h2>
+  
   <div id="grid"></div>
+  
+  <div id="tools">
+    <button id="btn-pen" class="tool-btn active" onclick="setTool('pen')">✏️ Pen</button>
+    <button id="btn-fill" class="tool-btn" onclick="setTool('fill')">🪣 Fill</button>
+  </div>
+
   <div id="palette"></div>
-  <button onclick="saveToCloud()">Send to Uncle Dean</button>
+  
+  <button id="save-btn" onclick="saveToCloud()">Send to Uncle Dean</button>
 
   <script>
     let currentColor = '#000000';
+    let currentTool = 'pen';
     const grid = document.getElementById('grid');
     const palette = document.getElementById('palette');
     const cells = [];
 
+    // Tool selection logic
+    function setTool(tool) {
+      currentTool = tool;
+      document.getElementById('btn-pen').classList.remove('active');
+      document.getElementById('btn-fill').classList.remove('active');
+      document.getElementById(`btn-${tool}`).classList.add('active');
+    }
+
+    // Flood Fill Algorithm
+    function floodFill(startIndex, targetColor) {
+      if (targetColor === currentColor) return; 
+      
+      const stack = [startIndex];
+      
+      while (stack.length > 0) {
+        const idx = stack.pop();
+        
+        if (cells[idx].dataset.color === targetColor) {
+          cells[idx].style.backgroundColor = currentColor;
+          cells[idx].dataset.color = currentColor;
+          
+          const x = idx % 16;
+          const y = Math.floor(idx / 16);
+          
+          // Add neighboring pixels to the stack to be checked and filled
+          if (x > 0) stack.push(idx - 1);       // Left
+          if (x < 15) stack.push(idx + 1);      // Right
+          if (y > 0) stack.push(idx - 16);      // Up
+          if (y < 15) stack.push(idx + 16);     // Down
+        }
+      }
+    }
+
+    // Build the 16x16 grid
     for (let i = 0; i < 256; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.style.backgroundColor = '#FFFFFF';
+      cell.dataset.color = '#FFFFFF'; // Store hex color for reliable flood filling
+      cell.dataset.index = i;
       
-      const paint = (e) => { e.preventDefault(); cell.style.backgroundColor = currentColor; };
+      const action = (e) => {
+        e.preventDefault();
+        if (currentTool === 'pen') {
+          cell.style.backgroundColor = currentColor;
+          cell.dataset.color = currentColor;
+        } else if (currentTool === 'fill') {
+          floodFill(i, cell.dataset.color);
+        }
+      };
       
-      cell.addEventListener('mousedown', paint);
-      cell.addEventListener('mouseenter', (e) => { if (e.buttons === 1) paint(e); });
-      cell.addEventListener('touchstart', paint);
+      cell.addEventListener('mousedown', action);
+      cell.addEventListener('mouseenter', (e) => { if (e.buttons === 1 && currentTool === 'pen') action(e); });
+      cell.addEventListener('touchstart', action);
       
       cell.addEventListener('touchmove', (e) => {
         e.preventDefault();
+        if (currentTool !== 'pen') return; // Don't allow drag-filling
         const touch = e.touches[0];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
         if (element && element.classList.contains('cell')) {
           element.style.backgroundColor = currentColor;
+          element.dataset.color = currentColor;
         }
       });
       
@@ -51,6 +114,7 @@
       cells.push(cell);
     }
 
+    // Build the Color Palette
     const paletteColors = [
       '#000000', '#FFFFFF', '#808080', '#8B4513', '#D2B48C', '#FF0000', 
       '#FFA500', '#FFD700', '#32CD32', '#00FFFF', '#1E90FF', '#9370DB', 
@@ -72,7 +136,7 @@
     });
 
     async function saveToCloud() {
-      const btn = document.querySelector('button');
+      const btn = document.getElementById('save-btn');
       btn.innerText = "Sending...";
       
       const canvas = document.createElement('canvas');
@@ -83,7 +147,7 @@
       cells.forEach((cell, i) => {
         const x = i % 16;
         const y = Math.floor(i / 16);
-        ctx.fillStyle = cell.style.backgroundColor;
+        ctx.fillStyle = cell.dataset.color;
         ctx.fillRect(x, y, 1, 1);
       });
 
@@ -91,18 +155,17 @@
       const base64Data = dataUrl.split(',')[1];
       const filename = `sprite_${Math.floor(Math.random()*10000)}.png`;
 
-      const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYI-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
+      // PASTE YOUR WORKING GOOGLE SCRIPT URL HERE
+      const scriptUrl = 'YOUR_GOOGLE_SCRIPT_URL_HERE';
 
       try {
         await fetch(scriptUrl, {
           method: 'POST',
-          mode: 'no-cors', // This is the crucial fix for mobile browsers
+          mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ image: base64Data, filename: filename })
         });
         
-        // Because of no-cors, the browser won't let us see the exact success response, 
-        // so we assume success if it didn't crash.
         alert("Sent to Uncle Dean's Drive!");
         
       } catch (err) {
