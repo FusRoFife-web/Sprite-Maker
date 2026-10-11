@@ -5,9 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <style>
     body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #222; color: white; margin: 0; padding: 20px; touch-action: pan-y; }
-    h2 { margin-bottom: 10px; }
+    h2 { margin-bottom: 5px; }
     
-    /* Updated grid width for 32 columns */
+    /* New styling for the name input */
+    #pet-name { padding: 10px; font-size: 16px; border-radius: 8px; border: 2px solid #555; text-align: center; margin-bottom: 15px; width: 80vw; max-width: 300px; background: #333; color: white; }
+    #pet-name::placeholder { color: #aaa; }
+    #pet-name:focus { outline: none; border-color: #4CAF50; }
+
     #grid { display: grid; grid-template-columns: repeat(32, 1fr); width: 90vw; max-width: 350px; aspect-ratio: 1; border: 2px solid #555; background: white; touch-action: none; }
     .cell { border: 1px solid #f0f0f0; }
     
@@ -25,6 +29,8 @@
 </head>
 <body>
   <h2>Sprite Maker</h2>
+  
+  <input type="text" id="pet-name" placeholder="Name your animal!" maxlength="20" autocomplete="off">
   
   <div id="grid"></div>
   
@@ -51,15 +57,12 @@
       document.getElementById(`btn-${tool}`).classList.add('active');
     }
 
-    // Updated flood fill for 32x32 dimensions
     function floodFill(startIndex, targetColor) {
       if (targetColor === currentColor) return; 
-      
       const stack = [startIndex];
       
       while (stack.length > 0) {
         const idx = stack.pop();
-        
         if (cells[idx].dataset.color === targetColor) {
           cells[idx].style.backgroundColor = currentColor;
           cells[idx].dataset.color = currentColor;
@@ -67,15 +70,14 @@
           const x = idx % 32;
           const y = Math.floor(idx / 32);
           
-          if (x > 0) stack.push(idx - 1);       // Left
-          if (x < 31) stack.push(idx + 1);      // Right
-          if (y > 0) stack.push(idx - 32);      // Up
-          if (y < 31) stack.push(idx + 32);     // Down
+          if (x > 0) stack.push(idx - 1);       
+          if (x < 31) stack.push(idx + 1);      
+          if (y > 0) stack.push(idx - 32);      
+          if (y < 31) stack.push(idx + 32);     
         }
       }
     }
 
-    // Loop extended to 1024 cells (32 * 32)
     for (let i = 0; i < 1024; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
@@ -137,7 +139,6 @@
       btn.innerText = "Sending...";
       
       const canvas = document.createElement('canvas');
-      // Updated canvas export dimensions
       canvas.width = 32;
       canvas.height = 32;
       const ctx = canvas.getContext('2d');
@@ -151,9 +152,15 @@
 
       const dataUrl = canvas.toDataURL('image/png');
       const base64Data = dataUrl.split(',')[1];
-      const filename = `sprite_${Math.floor(Math.random()*10000)}.png`;
+      
+      // Grab the name from the input field, strip out invalid file characters, or default to 'sprite'
+      let rawName = document.getElementById('pet-name').value.trim();
+      let safeName = rawName.replace(/[^a-zA-Z0-9]/g, "_");
+      if (safeName === "") safeName = "sprite";
+      
+      const filename = `${safeName}_${Math.floor(Math.random()*10000)}.png`;
 
-      // Pre-populated script URL
+      // PASTE YOUR WORKING GOOGLE SCRIPT URL HERE
       const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYI-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
 
       try {
@@ -165,6 +172,13 @@
         });
         
         alert("Sent to Uncle Dean's Drive!");
+        
+        // Optional: clear the canvas and name after sending so they can draw a new one
+        document.getElementById('pet-name').value = '';
+        cells.forEach(cell => {
+          cell.style.backgroundColor = '#FFFFFF';
+          cell.dataset.color = '#FFFFFF';
+        });
         
       } catch (err) {
         alert('Error sending sprite. Check your internet connection.');
