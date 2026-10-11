@@ -1,0 +1,88 @@
+let currentColor = '#000000';
+  const grid = document.getElementById('grid');
+  const palette = document.getElementById('palette');
+  const cells = [];
+
+  // 1. Build the 16x16 grid
+  for (let i = 0; i < 256; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.backgroundColor = '#FFFFFF';
+    
+    const paint = (e) => { e.preventDefault(); cell.style.backgroundColor = currentColor; };
+    
+    cell.addEventListener('mousedown', paint);
+    cell.addEventListener('mouseenter', (e) => { if (e.buttons === 1) paint(e); });
+    cell.addEventListener('touchstart', paint);
+    
+    cell.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (element && element.classList.contains('cell')) {
+        element.style.backgroundColor = currentColor;
+      }
+    });
+    
+    grid.appendChild(cell);
+    cells.push(cell);
+  }
+
+  // 2. Build the Color Palette
+  const paletteColors = ['#000000', '#FFFFFF', '#8B4513', '#A0522D', '#32CD32', '#1E90FF', '#FFD700', '#FF69B4'];
+  paletteColors.forEach(color => {
+    const btn = document.createElement('div');
+    btn.className = 'color';
+    btn.style.backgroundColor = color;
+    if (color === currentColor) btn.classList.add('selected');
+    
+    btn.onclick = () => {
+      currentColor = color;
+      document.querySelectorAll('.color').forEach(c => c.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+    palette.appendChild(btn);
+  });
+
+  // 3. Render grid and send to Google Drive
+  async function saveToCloud() {
+    const btn = document.querySelector('button');
+    btn.innerText = "Sending...";
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+    const ctx = canvas.getContext('2d');
+    
+    cells.forEach((cell, i) => {
+      const x = i % 16;
+      const y = Math.floor(i / 16);
+      ctx.fillStyle = cell.style.backgroundColor;
+      ctx.fillRect(x, y, 1, 1);
+    });
+
+    // Convert to Base64 string for Google Apps Script
+    const dataUrl = canvas.toDataURL('image/png');
+    const base64Data = dataUrl.split(',')[1];
+    const filename = `sprite_${Math.floor(Math.random()*10000)}.png`;
+
+    // PASTE YOUR GOOGLE WEB APP URL HERE
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYI-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
+
+    try {
+      if (scriptUrl === 'YOUR_GOOGLE_SCRIPT_URL_HERE') {
+        alert('Paste your Google Script URL into the code first!');
+      } else {
+        await fetch(scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ image: base64Data, filename: filename })
+        });
+        alert('Sent to Uncle Dean\'s Drive!');
+      }
+    } catch (err) {
+      alert('Error sending sprite. Check your internet connection.');
+    } finally {
+      btn.innerText = "Send to Uncle Dean";
+    }
+  }
