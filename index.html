@@ -8,7 +8,7 @@
     h2 { margin-bottom: 10px; }
     #grid { display: grid; grid-template-columns: repeat(16, 1fr); width: 90vw; max-width: 350px; aspect-ratio: 1; border: 2px solid #555; background: white; touch-action: none; }
     .cell { border: 1px solid #f0f0f0; }
-    #palette { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; justify-content: center; max-width: 350px; }
+    #palette { display: flex; gap: 8px; margin: 20px 0; flex-wrap: wrap; justify-content: center; max-width: 350px; }
     .color { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #222; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
     .selected { border-color: white; transform: scale(1.15); }
     button { padding: 15px 30px; font-size: 18px; font-weight: bold; background: #4CAF50; color: white; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
@@ -52,8 +52,24 @@
       cells.push(cell);
     }
 
-    // 2. Build the Color Palette
-    const paletteColors = ['#000000', '#FFFFFF', '#8B4513', '#A0522D', '#32CD32', '#1E90FF', '#FFD700', '#FF69B4'];
+    // 2. Build the Expanded Color Palette
+    const paletteColors = [
+      '#000000', // Black
+      '#FFFFFF', // White
+      '#808080', // Grey
+      '#8B4513', // Capybara Brown
+      '#D2B48C', // Tan / Sand
+      '#FF0000', // Red
+      '#FFA500', // Orange
+      '#FFD700', // Yellow
+      '#32CD32', // Lime Green
+      '#00FFFF', // Cyan
+      '#1E90FF', // Blue
+      '#9370DB', // Purple
+      '#FF69B4', // Hot Pink
+      '#FFB6C1'  // Light Pink
+    ];
+
     paletteColors.forEach(color => {
       const btn = document.createElement('div');
       btn.className = 'color';
@@ -89,7 +105,7 @@
       const base64Data = dataUrl.split(',')[1];
       const filename = `sprite_${Math.floor(Math.random()*10000)}.png`;
 
-      // Your exact Google Apps Script URL from the screenshot
+      // Your exact Google Apps Script URL
       const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYl-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
 
       try {
