@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>16x16 Sprite Maker</title>
+  <title>32x32 Sprite Maker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <style>
     body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #222; color: white; margin: 0; padding: 20px; touch-action: pan-y; }
     h2 { margin-bottom: 10px; }
     
-    #grid { display: grid; grid-template-columns: repeat(16, 1fr); width: 90vw; max-width: 350px; aspect-ratio: 1; border: 2px solid #555; background: white; touch-action: none; }
+    /* Updated grid width for 32 columns */
+    #grid { display: grid; grid-template-columns: repeat(32, 1fr); width: 90vw; max-width: 350px; aspect-ratio: 1; border: 2px solid #555; background: white; touch-action: none; }
     .cell { border: 1px solid #f0f0f0; }
     
-    /* Toolbar Styles */
     #tools { display: flex; gap: 15px; margin-top: 15px; }
     .tool-btn { padding: 10px 20px; font-size: 16px; font-weight: bold; background: #444; color: white; border: 2px solid #222; border-radius: 8px; cursor: pointer; }
     .tool-btn.active { background: #4CAF50; border-color: white; }
@@ -44,7 +44,6 @@
     const palette = document.getElementById('palette');
     const cells = [];
 
-    // Tool selection logic
     function setTool(tool) {
       currentTool = tool;
       document.getElementById('btn-pen').classList.remove('active');
@@ -52,7 +51,7 @@
       document.getElementById(`btn-${tool}`).classList.add('active');
     }
 
-    // Flood Fill Algorithm
+    // Updated flood fill for 32x32 dimensions
     function floodFill(startIndex, targetColor) {
       if (targetColor === currentColor) return; 
       
@@ -65,24 +64,23 @@
           cells[idx].style.backgroundColor = currentColor;
           cells[idx].dataset.color = currentColor;
           
-          const x = idx % 16;
-          const y = Math.floor(idx / 16);
+          const x = idx % 32;
+          const y = Math.floor(idx / 32);
           
-          // Add neighboring pixels to the stack to be checked and filled
           if (x > 0) stack.push(idx - 1);       // Left
-          if (x < 15) stack.push(idx + 1);      // Right
-          if (y > 0) stack.push(idx - 16);      // Up
-          if (y < 15) stack.push(idx + 16);     // Down
+          if (x < 31) stack.push(idx + 1);      // Right
+          if (y > 0) stack.push(idx - 32);      // Up
+          if (y < 31) stack.push(idx + 32);     // Down
         }
       }
     }
 
-    // Build the 16x16 grid
-    for (let i = 0; i < 256; i++) {
+    // Loop extended to 1024 cells (32 * 32)
+    for (let i = 0; i < 1024; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
       cell.style.backgroundColor = '#FFFFFF';
-      cell.dataset.color = '#FFFFFF'; // Store hex color for reliable flood filling
+      cell.dataset.color = '#FFFFFF';
       cell.dataset.index = i;
       
       const action = (e) => {
@@ -101,7 +99,7 @@
       
       cell.addEventListener('touchmove', (e) => {
         e.preventDefault();
-        if (currentTool !== 'pen') return; // Don't allow drag-filling
+        if (currentTool !== 'pen') return; 
         const touch = e.touches[0];
         const element = document.elementFromPoint(touch.clientX, touch.clientY);
         if (element && element.classList.contains('cell')) {
@@ -114,7 +112,6 @@
       cells.push(cell);
     }
 
-    // Build the Color Palette
     const paletteColors = [
       '#000000', '#FFFFFF', '#808080', '#8B4513', '#D2B48C', '#FF0000', 
       '#FFA500', '#FFD700', '#32CD32', '#00FFFF', '#1E90FF', '#9370DB', 
@@ -140,13 +137,14 @@
       btn.innerText = "Sending...";
       
       const canvas = document.createElement('canvas');
-      canvas.width = 16;
-      canvas.height = 16;
+      // Updated canvas export dimensions
+      canvas.width = 32;
+      canvas.height = 32;
       const ctx = canvas.getContext('2d');
       
       cells.forEach((cell, i) => {
-        const x = i % 16;
-        const y = Math.floor(i / 16);
+        const x = i % 32;
+        const y = Math.floor(i / 32);
         ctx.fillStyle = cell.dataset.color;
         ctx.fillRect(x, y, 1, 1);
       });
@@ -155,8 +153,8 @@
       const base64Data = dataUrl.split(',')[1];
       const filename = `sprite_${Math.floor(Math.random()*10000)}.png`;
 
-      // PASTE YOUR WORKING GOOGLE SCRIPT URL HERE
-      const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYI-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
+      // Pre-populated script URL
+      const scriptUrl = 'https://script.google.com/macros/s/AKfycbwwDpnpSNAVn-DLYl-8f1wmXKH_RO5vKyrOqgnpZGkpUHmitSO2XfcCSBuOit_g7ECGaA/exec';
 
       try {
         await fetch(scriptUrl, {
